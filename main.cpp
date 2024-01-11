@@ -119,7 +119,7 @@ public:
 
         else if (!memberExists)
         {
-            cout << "Member does not exists";
+            cout << "Member does not exists \n\n";
         }
         
         else {
@@ -170,7 +170,6 @@ public:
     void addMember() {
         int memID;
         string memName, memAddress, memEmail;
-
         cout << "Enter Member ID: ";
         cin >> memID;
         cout << "Enter Member Name: ";
@@ -225,32 +224,49 @@ int main() {
     file.close();
 
     Librarian librarian;
-    // librarian.availableBooks = books;  // Removed this line as availableBooks is not used in the code
 
-    librarian.addMember();
+    int enteredID;
+
+    cout << "Initializing! Please set values \n";
+
+    librarian.setStaffId();
+    cout << "Staff name: ";
+    cin >> librarian.name;
+    cout << "Address: ";
+    cin >> librarian.address;
+    cout << "Email: ";
+    cin >> librarian.email;
+    librarian.setSalary();
+
+    cout << "Welcome to the Library management system \n\n";
 
     int firstInput;
 
-    cout << "Welcome to the Library management system \n";
+    // Infinite loop for menu options
+    while (true) {
+        cout << "TO ISSUE BOOK = 1  ||  TO RETURN BOOK = 2 || TO ADD MEMBER = 3 || EXIT = 0 \n\n";
+        cin >> firstInput;
 
-    cout << "TO ISSUE BOOK = 1  ||  TO RETURN BOOK = 2 || TO ADD MEMBER = 3 \n";
-    cin >> firstInput;
+        switch (firstInput) {
+            case 1:
+                librarian.issueBook(books);
+                break;
+            case 2:
+                librarian.returnBook();
+                break;
+            case 3:
+                librarian.addMember();
+                break;
+            case 0:
+                cout << "Exiting the Library management system.\n";
+                return 0;
+            default:
+                cout << "Invalid input. Please try again.\n";
+        }
 
-    if (firstInput == 1) {
-        librarian.issueBook(books);
-    } else if (firstInput == 2) {
-        librarian.returnBook();
-       
-    } else if (firstInput == 3) {
-        librarian.addMember();
+        librarian.displayMembers();
+        librarian.displayBorrowedBooks();
     }
-
-    librarian.displayMembers();
-    librarian.displayBorrowedBooks();
-    librarian.issueBook(books);
-    librarian.issueBook(books);
-    librarian.returnBook();
-    librarian.displayBorrowedBooks();
 
     return 0;
 }
