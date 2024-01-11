@@ -13,7 +13,7 @@ public:
     string authorLastName;
     string bookType;
 
-    Book(int bkId, const string& bkName, const string& arFirstName, const string& arLastName, const string& bkType)
+    Book(int bkId, const string&  bkName, const string& arFirstName, const string& arLastName, const string& bkType)
         : bookId(bkId), bookName(bkName), authorFirstName(arFirstName), authorLastName(arLastName), bookType(bkType) {}
 
     void displayInfo() const {
@@ -73,17 +73,92 @@ public:
         cin >> salary;
     }
 
-    void issueBook() {
-        int bborrower, bbkid;
 
-        cout << "Enter the Book Id to be issued: ";
-        cin >> bbkid;
-        cout << "Enter the Member id to whom the book is issued: ";
-        cin >> bborrower;
 
-        borrowedBooks.emplace_back(bborrower, bbkid);
-        cout << "Book issued to the member successfully.\n";
+    void issueBook(const vector<Book>& books) {
+    int bborrower, bbkid;
+
+    cout << "Enter the Book Id to be issued: ";
+    cin >> bbkid;
+    cout << "Enter the Member id to whom the book is issued: ";
+    cin >> bborrower;
+
+
+    bool memberExists = false;
+    for (const auto& member : members) {
+        if (member.memberID == bborrower) {
+            memberExists = true;
+            break;
+        }
     }
+
+    
+    bool bookFound = false;
+    for (const auto& book : books) {
+        if (book.bookId == bbkid) {
+            bookFound = true;
+            break;
+        }
+    }
+
+    if (!bookFound) {
+        cout << "Book with ID " << bbkid << " not found. Unable to issue the book.\n";
+    } else {
+        // Check if the book ID is already in borrowedBooks
+        bool bookAlreadyIssued = false;
+        for (const auto& borrowedBook : borrowedBooks) {
+            if (borrowedBook.bbookid == bbkid) {
+                bookAlreadyIssued = true;
+                break;
+            }
+        }
+
+        if (bookAlreadyIssued) {
+            cout << "Book with ID " << bbkid << " is already issued. Book unavailable.\n";
+        } 
+
+        else if (!memberExists)
+        {
+            cout << "Member does not exists";
+        }
+        
+        else {
+            borrowedBooks.emplace_back(bborrower, bbkid);
+            cout << "Book issued to the member successfully.\n";
+        }
+    }
+
+}
+
+
+    void returnBook() {
+    int memberId, bookId;
+
+    cout << "Enter Member ID to return the book: ";
+    cin >> memberId;
+    cout << "Enter Book ID to return: ";
+    cin >> bookId;
+
+    bool bookAlreadyIssued = false;
+    size_t indexToRemove = 0;
+
+    for (size_t i = 0; i < borrowedBooks.size(); ++i) {
+        if (borrowedBooks[i].bbookid == bookId && borrowedBooks[i].borrower == memberId) {
+            bookAlreadyIssued = true;
+            indexToRemove = i;
+            break;
+        }
+    }
+
+    if (bookAlreadyIssued) {
+        borrowedBooks.erase(borrowedBooks.begin() + indexToRemove);
+        cout << "Book returned successfully.\n";
+    } else {
+        cout << "Book with ID " << bookId << " was not issued to Member ID " << memberId << ". Unable to return the book.\n";
+    }
+}
+
+
 
     void displayBorrowedBooks() const {
         cout << "List of books issued to members:\n";
@@ -152,6 +227,8 @@ int main() {
     Librarian librarian;
     // librarian.availableBooks = books;  // Removed this line as availableBooks is not used in the code
 
+    librarian.addMember();
+
     int firstInput;
 
     cout << "Welcome to the Library management system \n";
@@ -160,14 +237,19 @@ int main() {
     cin >> firstInput;
 
     if (firstInput == 1) {
-        librarian.issueBook();
+        librarian.issueBook(books);
     } else if (firstInput == 2) {
+        librarian.returnBook();
        
     } else if (firstInput == 3) {
         librarian.addMember();
     }
 
     librarian.displayMembers();
+    librarian.displayBorrowedBooks();
+    librarian.issueBook(books);
+    librarian.issueBook(books);
+    librarian.returnBook();
     librarian.displayBorrowedBooks();
 
     return 0;
