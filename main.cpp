@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -13,7 +14,7 @@ public:
     string authorLastName;
     string bookType;
 
-    Book(int bkId, const string&  bkName, const string& arFirstName, const string& arLastName, const string& bkType)
+    Book(int bkId, const string& bkName, const string& arFirstName, const string& arLastName, const string& bkType)
         : bookId(bkId), bookName(bkName), authorFirstName(arFirstName), authorLastName(arLastName), bookType(bkType) {}
 
     void displayInfo() const {
@@ -34,14 +35,46 @@ public:
         : memberID(memID), name(memName), address(memAddress), email(memEmail) {}
 };
 
+
+
+
+
+
 class BooksBorrowed {
 public:
     int borrower;
     int bbookid;
+    string dateOfIssuance;
+    string dateDue;
 
-    BooksBorrowed(int bborrower, int bbkid)
-        : borrower(bborrower), bbookid(bbkid) {}
+    BooksBorrowed(int bborrower, int bbkid, const string& date)
+        : borrower(bborrower), bbookid(bbkid), dateOfIssuance(date) {
+        makeDueDate();
+    }
+    void makeDueDate() {
+        // Extract day, month, and year from dateOfIssuance
+        int day, month, year;
+        sscanf(dateOfIssuance.c_str(), "%d-%d-%d", &day, &month, &year);
+
+        // Calculate due date (3 days after issuance)
+        day += 3;
+
+        // Handle month and year overflow
+        while (day > 31) {
+            day -= 31;
+            month += 1;
+        }
+
+        while (month > 12) {
+            month -= 12;
+            year += 1;
+        }
+
+        // Format dueDate as (DD-MM-YYYY)
+        dateDue = to_string(day) + "-" + to_string(month) + "-" + to_string(year);
+    }
 };
+
 
 
 
@@ -53,7 +86,7 @@ public:
     string address;
     string email;
     vector<Member> members;
-    vector<BooksBorrowed> borrowedBooks;  
+    vector<BooksBorrowed> borrowedBooks;
 
     void setStaffId() {
         cout << "Set Librarian staff ID: ";
@@ -73,16 +106,25 @@ public:
         cin >> salary;
     }
 
-
-
     void issueBook(const vector<Book>& books) {
-    int bborrower, bbkid;
+    int bborrower, bbkid, day, month, year;
 
     cout << "Enter the Book Id to be issued: ";
     cin >> bbkid;
     cout << "Enter the Member id to whom the book is issued: ";
     cin >> bborrower;
 
+    // Get the date of issue
+    cout << "Enter the date of issue (DD MM YYYY): ";
+    cin >> day >> month >> year;
+
+    // Validate the date
+    if (day < 1 || day > 31 || month < 1 || month > 12) {
+        cout << "Invalid date. Please enter a valid date.\n";
+        return;
+    }
+
+    string dateOfIssuance = to_string(day) + "-" + to_string(month) + "-" + to_string(year);
 
     bool memberExists = false;
     for (const auto& member : members) {
@@ -92,7 +134,6 @@ public:
         }
     }
 
-    
     bool bookFound = false;
     for (const auto& book : books) {
         if (book.bookId == bbkid) {
@@ -115,55 +156,70 @@ public:
 
         if (bookAlreadyIssued) {
             cout << "Book with ID " << bbkid << " is already issued. Book unavailable.\n";
-        } 
-
-        else if (!memberExists)
-        {
-            cout << "Member does not exists \n\n";
-        }
-        
-        else {
-            borrowedBooks.emplace_back(bborrower, bbkid);
-            cout << "Book issued to the member successfully.\n";
+        } else if (!memberExists) {
+            cout << "Member does not exist.\n\n";
+        } else {
+            borrowedBooks.emplace_back(bborrower, bbkid, dateOfIssuance);
+            cout << "Book issued to the member successfully on " << dateOfIssuance
+                 << ". Due date is " << borrowedBooks.back().dateDue << ".\n";
         }
     }
-
 }
 
 
     void returnBook() {
-    int memberId, bookId;
+        int memberId, bookId, returnDay, returnMonth, returnYear;
 
-    cout << "Enter Member ID to return the book: ";
-    cin >> memberId;
-    cout << "Enter Book ID to return: ";
-    cin >> bookId;
+        cout << "Enter Member ID to return the book: ";
+        cin >> memberId;
+        cout << "Enter Book ID to return: ";
+        cin >> bookId;
+        cout << "Enter the return date (DD-MM-YYYY): ";
+        cin >> returnDay >> returnMonth >> returnYear;
 
-    bool bookAlreadyIssued = false;
-    size_t indexToRemove = 0;
+        bool bookAlreadyIssued = false;
+        size_t indexToRemove = 0;
 
-    for (size_t i = 0; i < borrowedBooks.size(); ++i) {
-        if (borrowedBooks[i].bbookid == bookId && borrowedBooks[i].borrower == memberId) {
-            bookAlreadyIssued = true;
-            indexToRemove = i;
-            break;
+        for (size_t i = 0; i < borrowedBooks.size(); ++i) {
+            if (borrowedBooks[i].bbookid == bookId && borrowedBooks[i].borrower == memberId) {
+                bookAlreadyIssued = true;
+                indexToRemove = i;
+                break;
+            }
+        }
+
+        if (bookAlreadyIssued) {
+            // Extract day, month, and year from dueDate
+            int dueDay, dueMonth, dueYear;
+            sscanf(borrowedBooks[indexToRemove].dateDue.c_str(), "%d-%d-%d", &dueDay, &dueMonth, &dueYear);
+
+            // Calculate fine
+            int fine = 0;
+            if (returnYear > dueYear || (returnYear == dueYear && returnMonth > dueMonth) ||
+                (returnYear == dueYear && returnMonth == dueMonth && returnDay > dueDay)) {
+                fine = (returnYear - dueYear) * 365 + (returnMonth - dueMonth) * 30 + (returnDay - dueDay);
+            }
+
+            // Display fine
+            if (fine > 0) {
+                cout << "Member has recived a fine of : £" << fine << " for returning book "<< fine << " later than the due date" "\n";
+            }
+
+            // Remove book from borrowedBooks
+            borrowedBooks.erase(borrowedBooks.begin() + indexToRemove);
+            cout << "Book returned successfully.\n";
+        } else {
+            cout << "Book with ID " << bookId << " was not issued to Member ID " << memberId
+                 << ". Unable to return the book.\n";
         }
     }
-
-    if (bookAlreadyIssued) {
-        borrowedBooks.erase(borrowedBooks.begin() + indexToRemove);
-        cout << "Book returned successfully.\n";
-    } else {
-        cout << "Book with ID " << bookId << " was not issued to Member ID " << memberId << ". Unable to return the book.\n";
-    }
-}
-
-
 
     void displayBorrowedBooks() const {
         cout << "List of books issued to members:\n";
         for (const auto& borrowedBook : borrowedBooks) {
-            cout << "Member ID: " << borrowedBook.borrower << "\nBook ID: " << borrowedBook.bbookid << "\n\n";
+            cout << "Member ID: " << borrowedBook.borrower << "\nBook ID: " << borrowedBook.bbookid
+                 << "\nDate of Issue: " << borrowedBook.dateOfIssuance
+                 << "\nDue Date: " << borrowedBook.dateDue << "\n\n";
         }
     }
 
@@ -173,7 +229,7 @@ public:
         cout << "Enter Member ID: ";
         cin >> memID;
         cout << "Enter Member Name: ";
-        cin.ignore(); 
+        cin.ignore();
         getline(cin, memName);
         cout << "Enter Member Address: ";
         getline(cin, memAddress);
@@ -225,8 +281,6 @@ int main() {
 
     Librarian librarian;
 
-    int enteredID;
-
     cout << "Initializing! Please set values \n";
 
     librarian.setStaffId();
@@ -257,6 +311,7 @@ int main() {
             case 3:
                 librarian.addMember();
                 break;
+
             case 0:
                 cout << "Exiting the Library management system.\n";
                 return 0;
