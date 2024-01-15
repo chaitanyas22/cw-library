@@ -73,6 +73,8 @@ public:
         // Format dueDate as (DD-MM-YYYY)
         dateDue = to_string(day) + "-" + to_string(month) + "-" + to_string(year);
     }
+
+    
 };
 
 
@@ -106,6 +108,27 @@ public:
         cin >> salary;
     }
 
+    // Add this function to the Librarian class
+void memBorrowedBooks(int memberId) const {
+    cout << "List of books borrowed by Member ID " << memberId << ":\n";
+    bool found = false;
+
+    for (const auto& borrowedBook : borrowedBooks) {
+        if (borrowedBook.borrower == memberId) {
+            found = true;
+            cout << "Book ID: " << borrowedBook.bbookid
+                 << "\nDate of Issue: " << borrowedBook.dateOfIssuance
+                 << "\nDue Date: " << borrowedBook.dateDue << "\n\n";
+        }
+    }
+
+    if (!found) {
+        cout << "No issued books found for Member ID" << memberId << ".\n";
+    }
+}
+
+
+
     void issueBook(const vector<Book>& books) {
     int bborrower, bbkid, day, month, year;
 
@@ -115,8 +138,13 @@ public:
     cin >> bborrower;
 
     // Get the date of issue
-    cout << "Enter the date of issue (DD MM YYYY): ";
-    cin >> day >> month >> year;
+    cout << "Enter the date of issue (DD MM YYYY): \n";
+    cout << "DD: ";
+    cin >> day;
+    cout << "MM: ";
+    cin >> month;
+    cout << "YYYY: ";
+    cin >> year;
 
     // Validate the date
     if (day < 1 || day > 31 || month < 1 || month > 12) {
@@ -174,8 +202,14 @@ public:
         cin >> memberId;
         cout << "Enter Book ID to return: ";
         cin >> bookId;
-        cout << "Enter the return date (DD-MM-YYYY): ";
-        cin >> returnDay >> returnMonth >> returnYear;
+        cout << "Enter the return date (DD-MM-YYYY): \n";
+        cout << "DD: ";
+        cin >> returnDay;
+        cout << "MM: ";
+        cin >> returnMonth;
+        cout << "YYYY: ";
+        cin >> returnYear;
+        
 
         bool bookAlreadyIssued = false;
         size_t indexToRemove = 0;
@@ -256,10 +290,16 @@ void processCSVData(const vector<Book>& books) {
 }
 
 int main() {
-    ifstream file("library_books.csv");
+    string csvFileName;
+
+    // Get CSV file name from user
+    cout << "Enter the name of the CSV file: ";
+    cin >> csvFileName;
+
+    ifstream file(csvFileName);
 
     if (!file.is_open()) {
-        cerr << "Error opening file." << endl;
+        cerr << "Error opening CSV file: " << csvFileName << endl;
         return 1;
     }
 
@@ -298,7 +338,7 @@ int main() {
 
     // Infinite loop for menu options
     while (true) {
-        cout << "TO ISSUE BOOK = 1  ||  TO RETURN BOOK = 2 || TO ADD MEMBER = 3 || EXIT = 0 \n\n";
+        cout << "TO ISSUE BOOK = 1  ||  TO RETURN BOOK = 2 || TO ADD MEMBER = 3 || FIND BORROWED BOOKS BY MEMBER = 4 EXIT = 0 \n\n";
         cin >> firstInput;
 
         switch (firstInput) {
@@ -311,6 +351,12 @@ int main() {
             case 3:
                 librarian.addMember();
                 break;
+            case 4:
+             int memberIdToFind;
+             cout << "Enter Member ID to find borrowed books: ";
+             cin >> memberIdToFind;
+             librarian.memBorrowedBooks(memberIdToFind);
+    break;
 
             case 0:
                 cout << "Exiting the Library management system.\n";
@@ -319,8 +365,7 @@ int main() {
                 cout << "Invalid input. Please try again.\n";
         }
 
-        librarian.displayMembers();
-        librarian.displayBorrowedBooks();
+       
     }
 
     return 0;
